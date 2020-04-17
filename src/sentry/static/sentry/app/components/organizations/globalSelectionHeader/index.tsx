@@ -2,13 +2,15 @@ import React from 'react';
 import * as ReactRouter from 'react-router';
 import partition from 'lodash/partition';
 
-import {Organization, Project, GlobalSelection} from 'app/types';
+import {GlobalSelection, Organization, Project} from 'app/types';
 import ConfigStore from 'app/stores/configStore';
 import withGlobalSelection from 'app/utils/withGlobalSelection';
 import withOrganization from 'app/utils/withOrganization';
 import withProjectsSpecified from 'app/utils/withProjectsSpecified';
 
 import EnforceSingleProject from './enforceSingleProject';
+import SyncStoreToUrl from './syncStoreToUrl';
+import SyncUrlParams from './syncUrlParams';
 
 type EnforceSingleProjectProps = Omit<
   React.ComponentPropsWithoutRef<typeof EnforceSingleProject>,
@@ -20,7 +22,6 @@ type EnforceSingleProjectProps = Omit<
   | 'hasCustomRouting'
   | 'isEnforced'
 >;
-
 type Props = {
   organization: Organization;
   projects: Project[];
@@ -52,10 +53,12 @@ class GlobalSelectionHeaderContainer extends React.Component<Props> {
 
   render() {
     const {
-      globalSelectionInitialized,
+      selection,
+      isSelectionStoreReady,
       hasCustomRouting,
       organization,
       router,
+      location,
       ...props
     } = this.props;
     const enforceSingleProject = !organization.features.includes('global-views');
@@ -68,15 +71,25 @@ class GlobalSelectionHeaderContainer extends React.Component<Props> {
     // }
 
     return (
-      <EnforceSingleProject
-        isEnforced={enforceSingleProject}
-        memberProjects={memberProjects}
-        nonMemberProjects={nonMemberProjects}
-        organization={organization}
-        hasCustomRouting={!!hasCustomRouting}
-        {...props}
-        routerForControlledRouting={!hasCustomRouting ? router : null}
-      />
+      <React.Fragment>
+        <SyncUrlParams isDisabled={hasCustomRouting} location={location} />
+        <SyncStoreToUrl
+          isDisabled={hasCustomRouting}
+          selection={selection}
+          router={router}
+        />
+        <EnforceSingleProject
+          selection={selection}
+          location={location}
+          isEnforced={enforceSingleProject}
+          memberProjects={memberProjects}
+          nonMemberProjects={nonMemberProjects}
+          organization={organization}
+          hasCustomRouting={!!hasCustomRouting}
+          {...props}
+          routerForControlledRouting={!hasCustomRouting ? router : null}
+        />
+      </React.Fragment>
     );
   }
 }

@@ -7,12 +7,13 @@ import getDisplayName from 'app/utils/getDisplayName';
 import {GlobalSelection} from 'app/types';
 
 type InjectedGlobalSelectionProps = {
-  selection: GlobalSelection;
+  selection?: GlobalSelection;
+  isSelectionReady?: boolean;
 };
 
 type State = {
   selection: GlobalSelection;
-  initialized: boolean;
+  isReady: boolean;
 };
 
 /**
@@ -33,29 +34,19 @@ const withGlobalSelection = <P extends InjectedGlobalSelectionProps>(
       return GlobalSelectionStore.get();
     },
 
-    componentDidMount() {
-      this.updateSelection();
-    },
-
-    onUpdate() {
-      this.updateSelection();
-    },
-
-    updateSelection() {
-      const {selection, initialized} = GlobalSelectionStore.get();
-
-      if (this.state.selection !== selection || this.state.initialized !== initialized) {
-        this.setState({selection, initialized});
+    onUpdate(selection) {
+      if (this.state !== selection) {
+        this.setState(selection);
       }
     },
 
     render() {
-      const {selection, initialized} = this.state;
+      const {isSelectionReady, selection} = this.state;
       return (
         <WrappedComponent
-          selection={selection as GlobalSelection}
-          globalSelectionInitialized={initialized}
           {...(this.props as P)}
+          selection={selection as GlobalSelection}
+          isSelectionReady={isSelectionReady}
         />
       );
     },

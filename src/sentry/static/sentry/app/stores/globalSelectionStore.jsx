@@ -70,6 +70,8 @@ const GlobalSelectionStore = Reflux.createStore({
   init() {
     this.reset(this.selection);
     this.listenTo(GlobalSelectionActions.reset, this.onReset);
+    this.listenTo(GlobalSelectionActions.initializeUrlState, this.onInitializeUrlState);
+    this.listenTo(GlobalSelectionActions.save, this.onSave);
     this.listenTo(GlobalSelectionActions.updateProjects, this.updateProjects);
     this.listenTo(GlobalSelectionActions.skipEnforceProject, this.skipEnforceProject);
     this.listenTo(GlobalSelectionActions.enforceProject, this.enforceProject);
@@ -81,80 +83,81 @@ const GlobalSelectionStore = Reflux.createStore({
     this._hasLoaded = false;
     // Has passed the enforcement state
     this._hasEnforcedProject = false;
+    this._hasInitialState = false;
     this.selection = state || getDefaultSelection();
   },
 
   isReady() {
-    return this._hasEnforcedProject;
+    return this._hasEnforcedProject && this._hasLoaded && this._hasInitialState;
   },
 
+  /**
+   * Initializes the global selection store data
+   * Use query params if they exist, otherwise check local storage
+   */
+  onInitializeUrlState(orgSlug, queryParams, {skipLastUsed} = {}) {
+    // We only save environment and project, so if those exist in
+    // URL, do not touch local storage
+    const query = pick(queryParams, [URL_PARAM.PROJECT, URL_PARAM.ENVIRONMENT]);
+    const hasProjectOrEnvironmentInUrl = Object.keys(query).length > 0;
+    const parsed = getStateFromQuery(queryParams);
+
+    let globalSelection = getDefaultSelection();
+
+    globalSelection.datetime = {
+      [DATE_TIME.START]: parsed.start || null,
+      [DATE_TIME.END]: parsed.end || null,
+      [DATE_TIME.PERIOD]: parsed.period || null,
+      [DATE_TIME.UTC]: parsed.utc || null,
+    };
+
+    if (hasProjectOrEnvironmentInUrl) {
+      globalSelection.projects = parsed.project || [];
+      globalSelection.environments = parsed.environment || [];
+    } else if (!skipLastUsed) {
+      try {
+        const localStorageKey = `${LOCAL_STORAGE_KEY}:${orgSlug}`;
+        const storedValue = localStorage.getItem(localStorageKey);
+
+        if (storedValue) {
+          globalSelection = {
+            datetime: globalSelection.datetime,
+            ...JSON.parse(storedValue),
+          };
+        }
+      } catch (ex) {
+        // use default if invalid
+        console.error(ex); // eslint-disable-line no-console
+      }
+    }
+
+    this._hasInitialState = true;
+
+    this.selection = globalSelection;
+    this.trigger(this.get());
+  },
   /**
    * Initializes the global selection store
    * If there are query params apply these, otherwise check local storage
    */
-  async loadInitialData(organization, queryParams, {api, skipLastUsed} = {}) {
-    console.group('GlobalSelectionStore.loadInitialData');
-
-    // this._hasLoaded = true;
+  loadInitialData(organization, {api} = {}) {
     this.organization = organization;
-    const query = pick(queryParams, Object.values(URL_PARAM));
-    const hasQuery = Object.keys(query).length > 0;
-
-    let globalSelection = getDefaultSelection();
-
-    console.log('default', globalSelection);
-    console.log('has query', hasQuery);
-
-    if (hasQuery) {
-      const parsed = getStateFromQuery(queryParams);
-      globalSelection = {
-        projects: parsed.project || [],
-        environments: parsed.environment || [],
-        datetime: {
-          [DATE_TIME.START]: parsed.start || null,
-          [DATE_TIME.END]: parsed.end || null,
-          [DATE_TIME.PERIOD]: parsed.period || null,
-          [DATE_TIME.UTC]: parsed.utc || null,
-        },
-      };
-
-      console.log('updated global selection: ', globalSelection);
-    } else if (!skipLastUsed) {
-      try {
-        const localStorageKey = `${LOCAL_STORAGE_KEY}:${organization.slug}`;
-
-        const storedValue = localStorage.getItem(localStorageKey);
-
-        const defaultDateTime = getDefaultSelection().datetime;
-
-        if (storedValue) {
-          globalSelection = {datetime: defaultDateTime, ...JSON.parse(storedValue)};
-          console.log('storedValue: ', globalSelection);
-        }
-      } catch (ex) {
-        console.error(ex); // eslint-disable-line no-console
-        // use default if invalid
-      }
-    }
-    await this.loadSelectionIfValid(globalSelection, organization, api);
     this._hasLoaded = true;
-
-    console.groupEnd();
+    this.loadSelectionIfValid(this.selection, organization, api);
   },
 
   async loadSelectionIfValid(globalSelection, organization, api) {
-    console.group('loadSelectionIfValid', globalSelection);
-    if (await isValidSelection(globalSelection, organization, api)) {
-      this.selection = globalSelection;
-      console.log('newSelection', this.selection);
-      this.trigger(this.get());
-    }
-    console.log('invalid selection', globalSelection);
-    console.groupEnd();
+    // if (await isValidSelection(globalSelection, organization, api)) {
+    this.selection = globalSelection;
+    this.trigger(this.get());
+    // }
   },
 
   get() {
-    return {selection: this.selection, initialized: this.isReady()};
+    return {
+      selection: this.selection,
+      isReady: this.isReady(),
+    };
   },
 
   onReset() {
@@ -188,7 +191,6 @@ const GlobalSelectionStore = Reflux.createStore({
       ...this.selection,
       projects,
     };
-    this.updateLocalStorage();
     this.trigger(this.get());
   },
 
@@ -201,7 +203,6 @@ const GlobalSelectionStore = Reflux.createStore({
       ...this.selection,
       datetime,
     };
-    this.updateLocalStorage();
     this.trigger(this.get());
   },
 
@@ -214,11 +215,20 @@ const GlobalSelectionStore = Reflux.createStore({
       ...this.selection,
       environments,
     };
-    this.updateLocalStorage();
     this.trigger(this.get());
   },
 
-  updateLocalStorage() {
+  /**
+   * Save to local storage when user explicitly changes header values.
+   *
+   * e.g. if localstorage is empty, user loads issue details for project "foo"
+   * this should not consider "foo" as last used and should not save to local storage.
+   *
+   * However, if user then changes environment, it should...? Currently it will
+   * save the current project alongside environment to local storage. It's debatable if
+   * this is the desired behavior.
+   */
+  onSave(updateObj) {
     // Do nothing if no org is loaded or user is not an org member. Only
     // organizations that a user has membership in will be available via the
     // organizations store
@@ -226,11 +236,13 @@ const GlobalSelectionStore = Reflux.createStore({
       return;
     }
 
+    const {project, environment} = updateObj;
+
     try {
       const localStorageKey = `${LOCAL_STORAGE_KEY}:${this.organization.slug}`;
       const dataToSave = {
-        projects: this.selection.projects,
-        environments: this.selection.environments,
+        projects: project || this.selection.projects,
+        environments: environment || this.selection.environments,
       };
       localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
     } catch (ex) {

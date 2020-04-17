@@ -37,7 +37,7 @@ type State = {
   loading: boolean;
   error: boolean;
   errorType: Error;
-  project: null | Pick<Project, 'platform' | 'id' | 'slug'>;
+  project: null | (Pick<Project, 'id' | 'slug'> & Partial<Pick<Project, 'platform'>>);
 };
 
 class GroupDetails extends React.Component<Props, State> {
@@ -246,39 +246,40 @@ class GroupDetails extends React.Component<Props, State> {
     return (
       <DocumentTitle title={this.getTitle()}>
         <React.Fragment>
-          {!isLoading && !isError ? (
-            <GlobalSelectionHeader
-              organization={organization}
-              forceProject={project}
-              showDateSelector={false}
-              shouldForceProject
-              lockedMessageSubject={t('issue')}
-              showIssueStreamLink
-              showProjectSettingsLink
-            />
-          ) : null}
-
-          <PageContent>
-            {isLoading ? (
-              <LoadingIndicator />
-            ) : isError ? (
-              this.renderError()
-            ) : (
-              <Projects orgId={organization.slug} slugs={[project!.slug]}>
-                {({projects, initiallyLoaded, fetchError}) =>
-                  initiallyLoaded ? (
-                    fetchError ? (
-                      <LoadingError message={t('Error loading the specified project')} />
+          <GlobalSelectionHeader
+            // loading={isLoading}
+            organization={organization}
+            forceProject={project}
+            showDateSelector={false}
+            shouldForceProject
+            lockedMessageSubject={t('issue')}
+            showIssueStreamLink
+            showProjectSettingsLink
+          >
+            <PageContent>
+              {isLoading ? (
+                <LoadingIndicator />
+              ) : isError ? (
+                this.renderError()
+              ) : (
+                <Projects orgId={organization.slug} slugs={[project!.slug]}>
+                  {({projects, initiallyLoaded, fetchError}) =>
+                    initiallyLoaded ? (
+                      fetchError ? (
+                        <LoadingError
+                          message={t('Error loading the specified project')}
+                        />
+                      ) : (
+                        this.renderContent(projects[0])
+                      )
                     ) : (
-                      this.renderContent(projects[0])
+                      <LoadingIndicator />
                     )
-                  ) : (
-                    <LoadingIndicator />
-                  )
-                }
-              </Projects>
-            )}
-          </PageContent>
+                  }
+                </Projects>
+              )}
+            </PageContent>
+          </GlobalSelectionHeader>
         </React.Fragment>
       </DocumentTitle>
     );
