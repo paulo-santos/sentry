@@ -66,24 +66,32 @@ class BreadcrumbFilter extends React.Component<Props, State> {
     }));
   };
 
-  getDropDownButtonLabel = (): string => {
+  getDropDownButton = ({isOpen, getActorProps}) => {
     const {filterGroups} = this.props;
 
-    const checkedFilterGroupsOptions = filterGroups.filter(
+    const checkedFilterGroupsOptionsQuantity = filterGroups.filter(
       filterGroup => filterGroup.isChecked
+    ).length;
+
+    let buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${t('Active Filters')}`;
+
+    if (checkedFilterGroupsOptionsQuantity === 0) {
+      buttonLabel = t('Filter By');
+    }
+
+    if (checkedFilterGroupsOptionsQuantity === 1) {
+      buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${t('Active Filter')}`;
+    }
+
+    return (
+      <StyledDropdownButton
+        {...getActorProps()}
+        isOpen={isOpen}
+        priority={checkedFilterGroupsOptionsQuantity > 0 ? 'primary' : 'default'}
+      >
+        {buttonLabel}
+      </StyledDropdownButton>
     );
-
-    if (checkedFilterGroupsOptions.length === 0) {
-      return t('Filter By');
-    }
-
-    if (checkedFilterGroupsOptions.length === 1) {
-      return `${checkedFilterGroupsOptions[0].groupType}:${checkedFilterGroupsOptions[0].type}`;
-    }
-
-    return `${checkedFilterGroupsOptions[0].groupType}:${
-      checkedFilterGroupsOptions[0].type
-    } + ${checkedFilterGroupsOptions.length - 1}`;
   };
 
   render() {
@@ -99,15 +107,7 @@ class BreadcrumbFilter extends React.Component<Props, State> {
 
     return (
       <Wrapper>
-        <DropdownControl
-          menuWidth="50vh"
-          blendWithActor
-          button={({isOpen, getActorProps}) => (
-            <StyledDropdownButton {...getActorProps()} isOpen={isOpen}>
-              {this.getDropDownButtonLabel()}
-            </StyledDropdownButton>
-          )}
-        >
+        <DropdownControl menuWidth="50vh" blendWithActor button={this.getDropDownButton}>
           <React.Fragment>
             <BreadcrumbFilterHeader
               onSelectAll={this.handleSelectAll}
