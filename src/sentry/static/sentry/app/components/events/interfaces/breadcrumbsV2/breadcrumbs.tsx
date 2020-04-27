@@ -267,7 +267,7 @@ class BreadcrumbsContainer extends React.Component<Props, State> {
             />
             <StyledSearchBar
               placeholder={t('Search breadcrumbs...')}
-              onSearch={this.handleFilterBySearchTerm}
+              onChange={this.handleFilterBySearchTerm}
               query={searchTerm}
             />
           </Search>
