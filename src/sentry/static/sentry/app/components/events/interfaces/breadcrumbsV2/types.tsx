@@ -1,4 +1,7 @@
-type BreadcrumbLevel = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
+import {Color} from 'app/utils/theme';
+import {IconProps} from 'app/types/iconProps';
+
+export type BreadcrumbLevel = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
 
 type BreadcrumbTypeBase = {
   timestamp?: string; //it's recommended
@@ -45,8 +48,7 @@ export type BreadcrumbTypeDefault = {
     | 'user'
     | 'exception'
     | 'warning'
-    | 'default'
-    | 'error';
+    | 'default';
   data?: {[key: string]: any};
 } & BreadcrumbTypeBase;
 
@@ -56,3 +58,10 @@ export type Breadcrumb =
   | BreadcrumbTypeDefault;
 
 export type BreadcrumbType = Breadcrumb['type'];
+
+export type BreadcrumbDetails = {
+  color?: Color;
+  borderColor?: Color;
+  icon?: React.ComponentType<IconProps>;
+  description: string;
+};
