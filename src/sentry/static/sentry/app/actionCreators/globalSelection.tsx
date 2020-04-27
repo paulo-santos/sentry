@@ -62,6 +62,15 @@ export function resetGlobalSelection() {
   GlobalSelectionActions.reset();
 }
 
+export function skipEnforceProject() {
+  GlobalSelectionActions.skipEnforceProject();
+}
+
+export function enforceProject(project: ProjectId[], router: Router) {
+  GlobalSelectionActions.enforceProject(project);
+  updateParamsWithoutHistory({project}, router);
+}
+
 /**
  * Updates global project selection URL param if `router` is supplied
  * OTHERWISE fire action to update projects

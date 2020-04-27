@@ -71,26 +71,39 @@ const GlobalSelectionStore = Reflux.createStore({
     this.reset(this.selection);
     this.listenTo(GlobalSelectionActions.reset, this.onReset);
     this.listenTo(GlobalSelectionActions.updateProjects, this.updateProjects);
+    this.listenTo(GlobalSelectionActions.skipEnforceProject, this.skipEnforceProject);
+    this.listenTo(GlobalSelectionActions.enforceProject, this.enforceProject);
     this.listenTo(GlobalSelectionActions.updateDateTime, this.updateDateTime);
     this.listenTo(GlobalSelectionActions.updateEnvironments, this.updateEnvironments);
   },
 
   reset(state) {
     this._hasLoaded = false;
+    // Has passed the enforcement state
+    this._hasEnforcedProject = false;
     this.selection = state || getDefaultSelection();
+  },
+
+  isReady() {
+    return this._hasEnforcedProject;
   },
 
   /**
    * Initializes the global selection store
    * If there are query params apply these, otherwise check local storage
    */
-  loadInitialData(organization, queryParams, {api, skipLastUsed} = {}) {
-    this._hasLoaded = true;
+  async loadInitialData(organization, queryParams, {api, skipLastUsed} = {}) {
+    console.group('GlobalSelectionStore.loadInitialData');
+
+    // this._hasLoaded = true;
     this.organization = organization;
     const query = pick(queryParams, Object.values(URL_PARAM));
     const hasQuery = Object.keys(query).length > 0;
 
     let globalSelection = getDefaultSelection();
+
+    console.log('default', globalSelection);
+    console.log('has query', hasQuery);
 
     if (hasQuery) {
       const parsed = getStateFromQuery(queryParams);
@@ -104,6 +117,8 @@ const GlobalSelectionStore = Reflux.createStore({
           [DATE_TIME.UTC]: parsed.utc || null,
         },
       };
+
+      console.log('updated global selection: ', globalSelection);
     } else if (!skipLastUsed) {
       try {
         const localStorageKey = `${LOCAL_STORAGE_KEY}:${organization.slug}`;
@@ -114,29 +129,54 @@ const GlobalSelectionStore = Reflux.createStore({
 
         if (storedValue) {
           globalSelection = {datetime: defaultDateTime, ...JSON.parse(storedValue)};
+          console.log('storedValue: ', globalSelection);
         }
       } catch (ex) {
         console.error(ex); // eslint-disable-line no-console
         // use default if invalid
       }
     }
-    this.loadSelectionIfValid(globalSelection, organization, api);
+    await this.loadSelectionIfValid(globalSelection, organization, api);
+    this._hasLoaded = true;
+
+    console.groupEnd();
   },
 
   async loadSelectionIfValid(globalSelection, organization, api) {
+    console.group('loadSelectionIfValid', globalSelection);
     if (await isValidSelection(globalSelection, organization, api)) {
       this.selection = globalSelection;
-      this.trigger(this.selection);
+      console.log('newSelection', this.selection);
+      this.trigger(this.get());
     }
+    console.log('invalid selection', globalSelection);
+    console.groupEnd();
   },
 
   get() {
-    return this.selection;
+    return {selection: this.selection, initialized: this.isReady()};
   },
 
   onReset() {
     this.reset();
-    this.trigger(this.selection);
+    this.trigger(this.get());
+  },
+
+  skipEnforceProject() {
+    this._hasEnforcedProject = true;
+  },
+
+  enforceProject(projects = []) {
+    this._hasEnforcedProject = true;
+    if (isEqual(this.selection.projects, projects)) {
+      return;
+    }
+
+    this.selection = {
+      ...this.selection,
+      projects,
+    };
+    this.trigger(this.get());
   },
 
   updateProjects(projects = []) {
@@ -149,7 +189,7 @@ const GlobalSelectionStore = Reflux.createStore({
       projects,
     };
     this.updateLocalStorage();
-    this.trigger(this.selection);
+    this.trigger(this.get());
   },
 
   updateDateTime(datetime) {
@@ -162,7 +202,7 @@ const GlobalSelectionStore = Reflux.createStore({
       datetime,
     };
     this.updateLocalStorage();
-    this.trigger(this.selection);
+    this.trigger(this.get());
   },
 
   updateEnvironments(environments = []) {
@@ -175,7 +215,7 @@ const GlobalSelectionStore = Reflux.createStore({
       environments,
     };
     this.updateLocalStorage();
-    this.trigger(this.selection);
+    this.trigger(this.get());
   },
 
   updateLocalStorage() {

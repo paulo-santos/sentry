@@ -12,6 +12,7 @@ type InjectedGlobalSelectionProps = {
 
 type State = {
   selection: GlobalSelection;
+  initialized: boolean;
 };
 
 /**
@@ -29,9 +30,7 @@ const withGlobalSelection = <P extends InjectedGlobalSelectionProps>(
     mixins: [Reflux.listenTo(GlobalSelectionStore, 'onUpdate') as any],
 
     getInitialState() {
-      return {
-        selection: GlobalSelectionStore.get(),
-      };
+      return GlobalSelectionStore.get();
     },
 
     componentDidMount() {
@@ -43,18 +42,19 @@ const withGlobalSelection = <P extends InjectedGlobalSelectionProps>(
     },
 
     updateSelection() {
-      const selection = GlobalSelectionStore.get();
+      const {selection, initialized} = GlobalSelectionStore.get();
 
-      if (this.state.selection !== selection) {
-        this.setState({selection});
+      if (this.state.selection !== selection || this.state.initialized !== initialized) {
+        this.setState({selection, initialized});
       }
     },
 
     render() {
-      const {selection} = this.state;
+      const {selection, initialized} = this.state;
       return (
         <WrappedComponent
           selection={selection as GlobalSelection}
+          globalSelectionInitialized={initialized}
           {...(this.props as P)}
         />
       );

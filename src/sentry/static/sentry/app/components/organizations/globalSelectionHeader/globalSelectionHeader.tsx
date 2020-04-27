@@ -1,10 +1,9 @@
+/* eslint no-console:0 */
 import {WithRouterProps} from 'react-router/lib/withRouter';
 import PropTypes from 'prop-types';
 import React from 'react';
 import debounce from 'lodash/debounce';
-import flatten from 'lodash/flatten';
 import isEqual from 'lodash/isEqual';
-import partition from 'lodash/partition';
 import pick from 'lodash/pick';
 import styled from '@emotion/styled';
 
@@ -22,7 +21,6 @@ import {
   updateProjects,
 } from 'app/actionCreators/globalSelection';
 import BackToIssues from 'app/components/organizations/backToIssues';
-import ConfigStore from 'app/stores/configStore';
 import HeaderItemPosition from 'app/components/organizations/headerItemPosition';
 import HeaderSeparator from 'app/components/organizations/headerSeparator';
 import InlineSvg from 'app/components/inlineSvg';
@@ -38,12 +36,6 @@ import {getStateFromQuery} from './utils';
 import Header from './header';
 
 const PROJECTS_PER_PAGE = 50;
-
-function getProjectIdFromProject(project) {
-  return parseInt(project.id, 10);
-}
-
-type MinimalProject = Pick<Project, 'id' | 'slug'>;
 
 const defaultProps = {
   /**
@@ -73,8 +65,13 @@ const defaultProps = {
   disableMultipleProjectSelection: false,
 };
 
+type MinimalProject = Pick<Project, 'id' | 'slug'>;
+
 type Props = {
   organization: Organization;
+
+  memberProjects: Project[];
+  nonMemberProjects: Project[];
 
   /**
    * List of projects to display in project selector (comes from HoC)
@@ -177,6 +174,14 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
     organization: SentryTypes.Organization,
     router: PropTypes.object,
     projects: PropTypes.arrayOf(SentryTypes.Project).isRequired,
+
+    memberProjects: PropTypes.arrayOf(SentryTypes.Project).isRequired,
+
+    nonMemberProjects: PropTypes.arrayOf(SentryTypes.Project).isRequired,
+
+    /**
+     * Slugs of projects to display in project selector (this affects the ^^^projects returned from HoC)
+     */
     specificProjectSlugs: PropTypes.arrayOf(PropTypes.string),
     disableMultipleProjectSelection: PropTypes.bool,
     loadingProjects: PropTypes.bool,
@@ -219,13 +224,15 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       return;
     }
 
+    console.group('Mount');
+
     const {
       location,
       params,
       organization,
       selection,
-      shouldForceProject,
-      forceProject,
+      //   shouldForceProject,
+      //   forceProject,
     } = this.props;
 
     const hasMultipleProjectFeature = this.hasMultipleProjectSelection();
@@ -234,10 +241,28 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       return;
     }
 
+    // `getStateFromQuery()` calls `getParams()` which will return with a default
+    // date if there are no router params.
     const stateFromRouter = getStateFromQuery(location.query);
+    console.log(stateFromRouter);
+    const {period, ...stateFromRouterWithoutPeriod} = stateFromRouter;
+    const isPeriodFromUrlParam = period !== DEFAULT_STATS_PERIOD || location.query.period;
+
+    console.log(
+      isPeriodFromUrlParam,
+      period,
+      DEFAULT_STATS_PERIOD,
+      location.query.period
+    );
+
     // We should update store if there are any relevant URL parameters when component is mounted
-    if (Object.values(stateFromRouter).some(i => !!i)) {
+    if (
+      isPeriodFromUrlParam ||
+      Object.values(stateFromRouterWithoutPeriod).some(i => !!i)
+    ) {
+      console.log('stateFromRouter not empty');
       if (!stateFromRouter.start && !stateFromRouter.end && !stateFromRouter.period) {
+        console.log('applying default stats period');
         stateFromRouter.period = DEFAULT_STATS_PERIOD;
       }
       const {project, environment, start, end, period, utc} = stateFromRouter;
@@ -253,23 +278,32 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       if (hasMultipleProjectFeature) {
         updateProjects(requestedProjects);
       } else {
-        this.enforceSingleProject({requestedProjects, shouldForceProject, forceProject});
+        console.log('enforcing single project');
+        // this.enforceSingleProject({requestedProjects, shouldForceProject, forceProject});
       }
     } else if (params && params.orgId === organization.slug) {
+      console.log('orgid !== orgslug');
       // Otherwise, if organization has NOT changed,
       // we can update URL with values from store
       //
       // e.g. when switching to a new view that uses this component,
       // update URL parameters to reflect current store
       const {datetime, environments, projects} = selection;
-      const otherParams = {environment: environments, ...datetime};
+      const {period, ...datetimeWithoutPeriod} = datetime;
+      const otherParams = {
+        environment: environments,
+        ...datetimeWithoutPeriod,
+        ...(isPeriodFromUrlParam ? {period} : {}),
+      };
 
       if (hasMultipleProjectFeature || projects.length === 1) {
         updateParamsWithoutHistory({project: projects, ...otherParams}, this.getRouter());
       } else {
-        this.enforceSingleProject({shouldForceProject, forceProject}, otherParams);
+        // this.enforceSingleProject({shouldForceProject, forceProject}, otherParams);
       }
     }
+
+    console.groupEnd();
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -339,6 +373,9 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       return;
     }
 
+    console.group('Update');
+    console.log(selection.projects);
+
     const hasMultipleProjectFeature = this.hasMultipleProjectSelection();
     let singleProjectIsEnforced = false;
     // This means that previously forceProject was falsey (e.g. loading) and now
@@ -352,7 +389,8 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       const {project} = getStateFromQuery(location.query);
       if (!project) {
         singleProjectIsEnforced = true;
-        this.enforceSingleProject({shouldForceProject, forceProject});
+        console.log('enforce single project (force project)');
+        // this.enforceSingleProject({shouldForceProject, forceProject});
       }
     }
 
@@ -365,13 +403,15 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
     ) {
       const {project} = getStateFromQuery(location.query);
       if (!project) {
-        this.enforceSingleProject({shouldForceProject, forceProject});
+        console.log('enforce single project (loading)');
+        // this.enforceSingleProject({shouldForceProject, forceProject});
       }
     }
 
     // If component has updated (e.g. due to re-render from a router action),
     // update store values with values from router. Router should be source of truth
     this.updateStoreIfChange(prevProps, this.props);
+    console.groupEnd();
   }
 
   hasMultipleProjectSelection = () =>
@@ -441,11 +481,14 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
   };
 
   updateStoreIfChange = (prevProps, nextProps) => {
+    console.log('updateStoreIfChange');
     // Don't do anything if query parameters have not changed
     //
     // e.g. if selection store changed, don't trigger more actions
     // to update global selection store (otherwise we'll get recursive updates)
     const changedKeys = this.changedQueryKeys(prevProps, nextProps);
+
+    console.log('changedKeys', changedKeys);
 
     if (!changedKeys.length) {
       return;
@@ -545,28 +588,6 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
     callIfFunction(this.props.onUpdateProjects, projects);
   };
 
-  getProjects = () => {
-    const {organization, projects} = this.props;
-    const {isSuperuser} = ConfigStore.get('user');
-    const isOrgAdmin = new Set(organization.access).has('org:admin');
-
-    const [memberProjects, nonMemberProjects] = partition(
-      projects,
-      project => project.isMember
-    );
-
-    if (isSuperuser || isOrgAdmin) {
-      return [memberProjects, nonMemberProjects];
-    }
-
-    return [memberProjects, []];
-  };
-
-  getFirstProject = () =>
-    flatten(this.getProjects())
-      .map(getProjectIdFromProject)
-      .slice(0, 1);
-
   getBackButton = () => {
     const {organization, location} = this.props;
     return (
@@ -616,6 +637,8 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       showRelative,
       showDateSelector,
       showEnvironmentSelector,
+      memberProjects,
+      nonMemberProjects,
       allowClearTimeRange,
       showIssueStreamLink,
       showProjectSettingsLink,
@@ -631,8 +654,12 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
       ? [parseInt(forceProject.id, 10)]
       : this.props.selection.projects;
 
-    const [memberProjects, nonMemberProjects] = this.getProjects();
+    console.group('Render');
+    console.log('project state: ', this.state.projects);
+    console.log('selection: ', this.props.selection.projects);
+    const isReady = !loadingProjects && !this.props.globalSelectionInitialized;
 
+    console.groupEnd();
     return (
       <Header className={className}>
         <HeaderItemPosition>
@@ -669,7 +696,7 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
                   shouldForceProject={shouldForceProject}
                   forceProject={forceProject}
                   projects={loadingProjects ? projects : memberProjects}
-                  loadingProjects={!initiallyLoaded && loadingProjects}
+                  loadingProjects={!initiallyLoaded && !isReady}
                   nonMemberProjects={nonMemberProjects}
                   value={this.state.projects || this.props.selection.projects}
                   onChange={this.handleChangeProjects}
@@ -695,7 +722,7 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
               <MultipleEnvironmentSelector
                 organization={organization}
                 projects={this.props.projects}
-                loadingProjects={loadingProjects}
+                loadingProjects={!isReady}
                 selectedProjects={selectedProjects}
                 value={this.state.environments || this.props.selection.environments}
                 onChange={this.handleChangeEnvironments}
