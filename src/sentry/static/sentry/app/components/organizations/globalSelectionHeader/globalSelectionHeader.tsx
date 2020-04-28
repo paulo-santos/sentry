@@ -561,7 +561,7 @@ class GlobalSelectionHeader extends React.Component<Props, State> {
                   projects={this.props.projects}
                   loadingProjects={loadingProjects}
                   selectedProjects={selectedProjects}
-                  value={this.state.environments || this.props.selection.environments}
+                  value={this.props.selection.environments}
                   onChange={this.handleChangeEnvironments}
                   onUpdate={this.handleUpdateEnvironmments}
                 />

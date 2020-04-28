@@ -28,6 +28,9 @@ class SyncUrlParams extends React.Component<Props> {
       utc,
     } = getStateFromQuery(location.query, {allowEmptyPeriod: true});
 
+    console.group('SyncUrlParams.didMount');
+    console.log({project, environment, period});
+    console.groupEnd();
     if (project || environment) {
       updateProjects(project || []);
       updateEnvironments(environment || []);

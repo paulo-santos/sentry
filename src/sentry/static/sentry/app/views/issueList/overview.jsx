@@ -114,6 +114,8 @@ const IssueListOverview = createReactClass({
   },
 
   componentDidUpdate(prevProps, prevState) {
+    console.group('issueList.componentDidUpdate');
+    console.groupEnd();
     if (prevState.realtimeActive !== this.state.realtimeActive) {
       // User toggled realtime button
       if (this.state.realtimeActive) {

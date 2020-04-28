@@ -26,7 +26,8 @@ type Props = {
   organization: Organization;
   projects: Project[];
   selection: GlobalSelection;
-  globalSelectionInitialized?: boolean;
+  isInitialized?: boolean;
+  isSynced?: boolean;
   hasCustomRouting?: boolean;
   loadingProjects: boolean;
   specificProjectSlugs?: string[];
@@ -54,7 +55,8 @@ class GlobalSelectionHeaderContainer extends React.Component<Props> {
   render() {
     const {
       selection,
-      isSelectionStoreReady,
+      isInitialized,
+      isSynced,
       hasCustomRouting,
       organization,
       router,
@@ -63,32 +65,32 @@ class GlobalSelectionHeaderContainer extends React.Component<Props> {
     } = this.props;
     const enforceSingleProject = !organization.features.includes('global-views');
     const [memberProjects, nonMemberProjects] = this.getProjects();
-
-    // console.log({globalSelectionInitialized});
-
-    // if (!globalSelectionInitialized) {
-    //   return null;
-    // }
-
+    console.log({isInitialized, isSynced});
     return (
       <React.Fragment>
-        <SyncUrlParams isDisabled={hasCustomRouting} location={location} />
-        <SyncStoreToUrl
-          isDisabled={hasCustomRouting}
-          selection={selection}
-          router={router}
-        />
-        <EnforceSingleProject
-          selection={selection}
-          location={location}
-          isEnforced={enforceSingleProject}
-          memberProjects={memberProjects}
-          nonMemberProjects={nonMemberProjects}
-          organization={organization}
-          hasCustomRouting={!!hasCustomRouting}
-          {...props}
-          routerForControlledRouting={!hasCustomRouting ? router : null}
-        />
+        {isInitialized ? (
+          <React.Fragment>
+            <SyncUrlParams isDisabled={hasCustomRouting} location={location} />
+            <SyncStoreToUrl
+              isDisabled={hasCustomRouting}
+              selection={selection}
+              router={router}
+            />
+          </React.Fragment>
+        ) : null}
+        {isSynced ? (
+          <EnforceSingleProject
+            selection={selection}
+            location={location}
+            isEnforced={enforceSingleProject}
+            memberProjects={memberProjects}
+            nonMemberProjects={nonMemberProjects}
+            organization={organization}
+            hasCustomRouting={!!hasCustomRouting}
+            {...props}
+            routerForControlledRouting={!hasCustomRouting ? router : null}
+          />
+        ) : null}
       </React.Fragment>
     );
   }

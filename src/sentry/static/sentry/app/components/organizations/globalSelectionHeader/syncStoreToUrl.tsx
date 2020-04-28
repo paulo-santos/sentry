@@ -2,7 +2,7 @@ import React from 'react';
 import * as ReactRouter from 'react-router';
 
 import {GlobalSelection} from 'app/types';
-import {updateParamsWithoutHistory} from 'app/actionCreators/globalSelection';
+import {syncStoreToUrl} from 'app/actionCreators/globalSelection';
 
 type Props = {
   selection: GlobalSelection;
@@ -21,7 +21,7 @@ class SyncStoreToUrl extends React.Component<Props> {
     console.log(projects, environments, datetime);
 
     // ignore default statsPeriod
-    updateParamsWithoutHistory({project: projects, ...otherParams}, router);
+    syncStoreToUrl({project: projects, ...otherParams}, router);
     console.groupEnd();
   }
 
@@ -52,7 +52,6 @@ class SyncStoreToUrlContainer extends React.Component<ContainerProps> {
       return null;
     }
 
-    console.log('SyncStoreToUrlContainer: ', selection, this.serializedQuery);
     return (
       <SyncStoreToUrl key={this.serializedQuery} router={router} selection={selection} />
     );

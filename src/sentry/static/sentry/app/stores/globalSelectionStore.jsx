@@ -71,6 +71,7 @@ const GlobalSelectionStore = Reflux.createStore({
     this.reset(this.selection);
     this.listenTo(GlobalSelectionActions.reset, this.onReset);
     this.listenTo(GlobalSelectionActions.initializeUrlState, this.onInitializeUrlState);
+    this.listenTo(GlobalSelectionActions.syncStoreToUrl, this.onSyncStoreToUrl);
     this.listenTo(GlobalSelectionActions.save, this.onSave);
     this.listenTo(GlobalSelectionActions.updateProjects, this.updateProjects);
     this.listenTo(GlobalSelectionActions.skipEnforceProject, this.skipEnforceProject);
@@ -84,11 +85,20 @@ const GlobalSelectionStore = Reflux.createStore({
     // Has passed the enforcement state
     this._hasEnforcedProject = false;
     this._hasInitialState = false;
+    this._hasSyncToUrl = false;
     this.selection = state || getDefaultSelection();
   },
 
+  isInitialized() {
+    return this._hasLoaded && this._hasInitialState;
+  },
+
+  isSynced() {
+    return this._hasSyncToUrl;
+  },
+
   isReady() {
-    return this._hasEnforcedProject && this._hasLoaded && this._hasInitialState;
+    return this.isInitialized() && this._hasEnforcedProject;
   },
 
   /**
@@ -136,6 +146,10 @@ const GlobalSelectionStore = Reflux.createStore({
     this.selection = globalSelection;
     this.trigger(this.get());
   },
+  onSyncStoreToUrl() {
+    this._hasSyncToUrl = true;
+    this.trigger(this.get());
+  },
   /**
    * Initializes the global selection store
    * If there are query params apply these, otherwise check local storage
@@ -156,7 +170,9 @@ const GlobalSelectionStore = Reflux.createStore({
   get() {
     return {
       selection: this.selection,
+      isInitialized: this.isInitialized(),
       isReady: this.isReady(),
+      isSynced: this.isSynced(),
     };
   },
 
@@ -167,6 +183,7 @@ const GlobalSelectionStore = Reflux.createStore({
 
   skipEnforceProject() {
     this._hasEnforcedProject = true;
+    this.trigger(this.get());
   },
 
   enforceProject(projects = []) {

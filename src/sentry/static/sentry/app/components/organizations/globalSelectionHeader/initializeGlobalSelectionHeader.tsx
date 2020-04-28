@@ -20,6 +20,9 @@ class InitializeGlobalSelectionHeader extends React.Component<Props> {
     const skipLastUsed = !!routes.find(
       ({path}) => path && path.includes('/organizations/:orgId/issues/:groupId/')
     );
+    console.group('InitializeGlobalSelectionHeader');
+    console.log('initializeUrlState', location.query);
+    console.groupEnd();
     initializeUrlState(orgSlug, location.query, {
       skipLastUsed,
     });

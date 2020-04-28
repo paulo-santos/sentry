@@ -94,7 +94,7 @@ class EnforceSingleProject extends React.Component<Props> {
       newProject = this.getFirstProject();
     }
 
-    console.log('newProject', newProject);
+    console.log('enforce new project', newProject);
     enforceProject(newProject, routerForControlledRouting);
   }
 

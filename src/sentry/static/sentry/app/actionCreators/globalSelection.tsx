@@ -71,6 +71,11 @@ export function initializeUrlState(
   GlobalSelectionActions.initializeUrlState(orgSlug, query, options);
 }
 
+export function syncStoreToUrl(obj: UrlParams, router?: Router, options?: Options) {
+  GlobalSelectionActions.syncStoreToUrl();
+  updateParamsWithoutHistory(obj, router, options);
+}
+
 export function skipEnforceProject() {
   GlobalSelectionActions.skipEnforceProject();
 }

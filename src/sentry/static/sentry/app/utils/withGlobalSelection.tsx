@@ -8,12 +8,15 @@ import {GlobalSelection} from 'app/types';
 
 type InjectedGlobalSelectionProps = {
   selection?: GlobalSelection;
-  isSelectionReady?: boolean;
+  isInitialized?: boolean;
+  isReady?: boolean;
+  isSynced?: boolean;
 };
 
 type State = {
   selection: GlobalSelection;
-  isReady: boolean;
+  isInitialized?: boolean;
+  isSynced?: boolean;
 };
 
 /**
@@ -41,12 +44,14 @@ const withGlobalSelection = <P extends InjectedGlobalSelectionProps>(
     },
 
     render() {
-      const {isSelectionReady, selection} = this.state;
+      const {isInitialized, isReady, isSynced, selection} = this.state;
       return (
         <WrappedComponent
           {...(this.props as P)}
           selection={selection as GlobalSelection}
-          isSelectionReady={isSelectionReady}
+          isReady={isReady}
+          isInitialized={isInitialized}
+          isSynced={isSynced}
         />
       );
     },
