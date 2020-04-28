@@ -9,9 +9,7 @@ import DropdownButton from 'app/components/dropdownButton';
 import BreadcrumbFilterGroup from './breadcrumbFilterGroup';
 import BreadcrumbFilterHeader from './breadcrumbFilterHeader';
 import BreadcrumbFilterFooter from './breadcrumbFilterFooter';
-import {FilterGroupLevel, FilterGroupType} from './types';
-
-type FilterGroup = FilterGroupLevel | FilterGroupType;
+import {FilterGroup, FilterGroupType, FilterType} from './types';
 
 type Props = {
   onFilter: (filterGroups: Array<FilterGroup>) => () => void;
@@ -35,12 +33,13 @@ class BreadcrumbFilter extends React.Component<Props, State> {
 
   loadState() {
     const {filterGroups} = this.props;
+
     this.setState({
       filterGroups,
     });
   }
 
-  handleClickItem = (type: any, groupType: any) => {
+  handleClickItem = (type: FilterType, groupType: FilterGroupType) => {
     const {filterGroups} = this.state;
     const newFilterGroups = filterGroups.map(filterGroup => {
       if (filterGroup.groupType === groupType && filterGroup.type === type) {
@@ -73,14 +72,14 @@ class BreadcrumbFilter extends React.Component<Props, State> {
       filterGroup => filterGroup.isChecked
     ).length;
 
-    let buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${t('Active Filters')}`;
+    let buttonLabel = t('Filter By');
 
-    if (checkedFilterGroupsOptionsQuantity === 0) {
-      buttonLabel = t('Filter By');
-    }
-
-    if (checkedFilterGroupsOptionsQuantity === 1) {
-      buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${t('Active Filter')}`;
+    if (checkedFilterGroupsOptionsQuantity > 0) {
+      buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${
+        checkedFilterGroupsOptionsQuantity === 1
+          ? t('Active Filter')
+          : t('Active Filters')
+      }`;
     }
 
     return (

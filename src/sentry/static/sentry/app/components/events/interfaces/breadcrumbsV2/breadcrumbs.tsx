@@ -15,7 +15,6 @@ import BreadcrumbTime from '../breadcrumbs/breadcrumbTime';
 import BreadcrumbCollapsed from '../breadcrumbs/breadcrumbCollapsed';
 import BreadcrumbRenderer from '../breadcrumbs/breadcrumbRenderer';
 import BreadcrumbFilter from './breadcrumbFilter/breadcrumbFilter';
-import {FilterGroupLevel, FilterGroupType} from './breadcrumbFilter/types';
 import convertBreadcrumbType from './convertBreadcrumbType';
 import getBreadcrumbDetails from './getBreadcrumbDetails';
 import {Breadcrumb, BreadcrumbDetails} from './types';
@@ -69,26 +68,14 @@ class BreadcrumbsContainer extends React.Component<Props, State> {
       breadcrumbs = [...breadcrumbs, virtualCrumb];
     }
 
-    const breadcrumbTypes: Array<FilterGroupType> = [];
-    const breadcrumbLevels: Array<FilterGroupLevel> = [];
+    const breadcrumbTypes: BreadcrumbFilterGroups = [];
+
+    // TODO(Priscila): implement levels
+    //const breadcrumbLevels: BreadcrumbFilterGroups = [];
 
     const convertedBreadcrumbs = breadcrumbs.map((breadcrumb, index) => {
       const convertedBreadcrumb = convertBreadcrumbType(breadcrumb);
       const breadcrumbDetails = getBreadcrumbDetails(convertedBreadcrumb.type);
-
-      if (
-        convertedBreadcrumb?.level &&
-        !breadcrumbLevels.find(
-          breadcrumbLevel => breadcrumbLevel.type === convertedBreadcrumb?.level
-        )
-      ) {
-        breadcrumbLevels.push({
-          groupType: 'level',
-          type: convertedBreadcrumb?.level,
-          isChecked: true,
-          description: 'X',
-        });
-      }
 
       if (!breadcrumbTypes.find(b => b.type === convertedBreadcrumb.type)) {
         !breadcrumbTypes.push({
@@ -110,7 +97,7 @@ class BreadcrumbsContainer extends React.Component<Props, State> {
       breadcrumbs: convertedBreadcrumbs,
       filteredBreadcrumbs: convertedBreadcrumbs,
       filteredBreadcrumbsByCustomSearch: convertedBreadcrumbs,
-      breadcrumbFilterGroups: [...breadcrumbTypes, ...breadcrumbLevels],
+      breadcrumbFilterGroups: breadcrumbTypes,
     });
   };
 
@@ -185,7 +172,7 @@ class BreadcrumbsContainer extends React.Component<Props, State> {
       breadcrumbFilterGroup => breadcrumbFilterGroup.groupType === 'type'
     );
 
-    //levels
+    // TODO(Priscila): implement levels
     // const breadcrumbFilterGroupLevels = breadcrumbFilterGroups
     //   .filter(breadcrumbFilterGroup => breadcrumbFilterGroup.groupType === 'level')
     //   .map(breadcrumbFilterGroup => breadcrumbFilterGroup.type);

@@ -1,46 +1,26 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import {IconProps} from 'app/types/iconProps';
 import space from 'app/styles/space';
 import CheckboxFancy from 'app/components/checkboxFancy/checkboxFancy';
 
-import {BreadCrumbIconWrapper} from '../styles';
-import {FilterGroupLevel, FilterGroupType, BreadcrumbDetails} from './types';
+import {FilterType, FilterGroupType, FilterGroup} from './types';
+import BreadcrumbFilterGroupIcon from './breadcrumbFilterGroupIcon';
 
 type Props = {
   groupHeaderTitle: string;
-  data: Array<FilterGroupLevel | FilterGroupType>;
-  onClick: (
-    type: FilterGroupLevel['type'] | FilterGroupType['type'],
-    groupType: FilterGroupLevel['groupType'] | FilterGroupType['groupType']
-  ) => void;
+  data: Array<FilterGroup>;
+  onClick: (type: FilterType, groupType: FilterGroupType) => void;
 };
 
 const BreadcrumbFilterGroup = ({groupHeaderTitle, data, onClick}: Props) => {
-  const handleClick = (
-    type: FilterGroupLevel['type'] | FilterGroupType['type'],
-    groupType: FilterGroupLevel['groupType'] | FilterGroupType['groupType']
-  ) => (event: React.MouseEvent<HTMLLIElement>) => {
+  const handleClick = (type: FilterType, groupType: FilterGroupType) => (
+    event: React.MouseEvent<HTMLLIElement>
+  ) => {
     event.stopPropagation();
     onClick(type, groupType);
   };
 
-  const renderIcon = ({
-    icon,
-    color,
-    borderColor,
-  }: Omit<BreadcrumbDetails, 'description'>) => {
-    if (!icon) return null;
-
-    const Icon = icon as React.ComponentType<IconProps>;
-
-    return (
-      <BreadCrumbIconWrapper color={color} borderColor={borderColor} size={20}>
-        <Icon size="xs" />
-      </BreadCrumbIconWrapper>
-    );
-  };
   return (
     <div>
       <FilterGroupHeader>{groupHeaderTitle}</FilterGroupHeader>
@@ -53,7 +33,11 @@ const BreadcrumbFilterGroup = ({groupHeaderTitle, data, onClick}: Props) => {
               onClick={handleClick(type, groupType)}
             >
               <ListItemDescription>
-                {renderIcon({icon, color, borderColor})}
+                <BreadcrumbFilterGroupIcon
+                  icon={icon}
+                  color={color}
+                  borderColor={borderColor}
+                />
                 <span>{description}</span>
               </ListItemDescription>
               <CheckboxFancy isChecked={isChecked} />
@@ -70,11 +54,11 @@ export default BreadcrumbFilterGroup;
 const FilterGroupHeader = styled('div')`
   display: flex;
   align-items: center;
+  margin: 0;
   background-color: ${p => p.theme.offWhite};
   color: ${p => p.theme.gray2};
   font-weight: normal;
   font-size: ${p => p.theme.fontSizeMedium};
-  margin: 0;
   padding: ${space(1)} ${space(2)};
   border-bottom: 1px solid ${p => p.theme.borderDark};
 `;
