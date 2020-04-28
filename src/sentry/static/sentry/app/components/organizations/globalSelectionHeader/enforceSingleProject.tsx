@@ -30,7 +30,6 @@ type Props = {
   nonMemberProjects: Project[];
 
   shouldForceProject?: boolean;
-  forceProject?: Project;
   routerForControlledRouting: WithRouterProps['router'] | null;
   hasCustomRouting: boolean;
 } & GlobalSelectionHeaderProps;
