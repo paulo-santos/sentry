@@ -13,11 +13,11 @@ import {IconProps} from 'app/types/iconProps';
 import {PlatformContextProvider} from '../breadcrumbs/platformContext';
 import BreadcrumbTime from '../breadcrumbs/breadcrumbTime';
 import BreadcrumbCollapsed from '../breadcrumbs/breadcrumbCollapsed';
-import BreadcrumbRenderer from '../breadcrumbs/breadcrumbRenderer';
+import {Breadcrumb, BreadcrumbDetails} from '../breadcrumbs/types';
 import BreadcrumbFilter from './breadcrumbFilter/breadcrumbFilter';
 import convertBreadcrumbType from './convertBreadcrumbType';
 import getBreadcrumbDetails from './getBreadcrumbDetails';
-import {Breadcrumb, BreadcrumbDetails} from '../breadcrumbs/types';
+import BreadcrumbRenderer from './breadcrumbRenderer';
 import {BreadCrumb, BreadCrumbIconWrapper} from './styles';
 
 const MAX_CRUMBS_WHEN_COLLAPSED = 10;
