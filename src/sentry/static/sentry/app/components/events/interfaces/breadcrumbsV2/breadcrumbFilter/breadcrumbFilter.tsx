@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import isEqual from 'lodash/isEqual';
 
-import {t} from 'app/locale';
+import {t, tn} from 'app/locale';
 import DropdownControl from 'app/components/dropdownControl';
 import DropdownButton from 'app/components/dropdownButton';
 
@@ -75,11 +75,11 @@ class BreadcrumbFilter extends React.Component<Props, State> {
     let buttonLabel = t('Filter By');
 
     if (checkedFilterGroupsOptionsQuantity > 0) {
-      buttonLabel = `${checkedFilterGroupsOptionsQuantity} ${
-        checkedFilterGroupsOptionsQuantity === 1
-          ? t('Active Filter')
-          : t('Active Filters')
-      }`;
+      buttonLabel = tn(
+        '%s Active Filter',
+        '%s Active Filters',
+        checkedFilterGroupsOptionsQuantity
+      );
     }
 
     return (

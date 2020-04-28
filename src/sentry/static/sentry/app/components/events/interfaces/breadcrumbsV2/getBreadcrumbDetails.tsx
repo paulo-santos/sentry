@@ -51,7 +51,7 @@ function getBreadcrumbDetails(breadcrumbType: BreadcrumbType): BreadcrumbDetails
       return {
         color: 'green',
         icon: IconRefresh,
-        description: t('Http request'),
+        description: t('HTTP request'),
       };
     }
     default:

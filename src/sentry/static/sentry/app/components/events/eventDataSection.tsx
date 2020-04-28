@@ -118,6 +118,7 @@ const Permalink = styled('a')`
 
 export const SectionHeader = styled('div')`
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
   position: relative;
   margin-bottom: ${space(3)};
@@ -156,6 +157,11 @@ export const SectionHeader = styled('div')`
   &:hover ${Permalink} {
     display: block;
   }
+
+  @media (min-width: ${props => props.theme.breakpoints[0]}) {
+    flex-direction: row;
+  }
+
   @media (min-width: ${props => props.theme.breakpoints[2]}) {
     & > small {
       margin-left: ${space(1)};
@@ -170,6 +176,11 @@ const SectionContents = styled('div')`
 
 const ActionContainer = styled('div')`
   flex-shrink: 0;
+  margin-top: ${space(1)};
+
+  @media (min-width: ${props => props.theme.breakpoints[0]}) {
+    margin-top: 0;
+  }
 `;
 
 export default EventDataSection;

@@ -319,7 +319,11 @@ const Content = styled('div')`
 
 const Search = styled('div')`
   display: flex;
-  width: 600px;
+  width: 100%;
+
+  @media (min-width: ${props => props.theme.breakpoints[0]}) {
+    width: 600px;
+  }
 `;
 
 const StyledSearchBar = styled(SearchBar)`
