@@ -17,7 +17,7 @@ import BreadcrumbRenderer from '../breadcrumbs/breadcrumbRenderer';
 import BreadcrumbFilter from './breadcrumbFilter/breadcrumbFilter';
 import convertBreadcrumbType from './convertBreadcrumbType';
 import getBreadcrumbDetails from './getBreadcrumbDetails';
-import {Breadcrumb, BreadcrumbDetails} from './types';
+import {Breadcrumb, BreadcrumbDetails} from '../breadcrumbs/types';
 import {BreadCrumb, BreadCrumbIconWrapper} from './styles';
 
 const MAX_CRUMBS_WHEN_COLLAPSED = 10;

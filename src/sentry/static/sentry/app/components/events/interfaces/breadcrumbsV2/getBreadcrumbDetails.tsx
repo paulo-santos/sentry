@@ -5,7 +5,7 @@ import {IconUser} from 'app/icons/iconUser';
 import {IconRefresh} from 'app/icons/iconRefresh';
 import {t} from 'app/locale';
 
-import {BreadcrumbType, BreadcrumbDetails} from './types';
+import {BreadcrumbType, BreadcrumbDetails} from '../breadcrumbs/types';
 
 function getBreadcrumbDetails(breadcrumbType: BreadcrumbType): BreadcrumbDetails {
   switch (breadcrumbType) {

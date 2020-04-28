@@ -1,4 +1,4 @@
-import {Breadcrumb} from './types';
+import {Breadcrumb} from '../breadcrumbs/types';
 
 function convertBreadcrumbType(breadcrumb: Breadcrumb): Breadcrumb {
   // special case for 'ui.' and `sentry.` category breadcrumbs

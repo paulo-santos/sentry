@@ -1,4 +1,8 @@
-import {BreadcrumbDetails, BreadcrumbType, BreadcrumbLevel} from '../types';
+import {
+  BreadcrumbDetails,
+  BreadcrumbType,
+  BreadcrumbLevel,
+} from '../../breadcrumbs/types';
 
 type FilterGroupBase = {
   isChecked: boolean;

@@ -4,7 +4,7 @@ import Feature from 'app/components/acl/feature';
 import BreadcrumbsInterface from 'app/components/events/interfaces/breadcrumbs/breadcrumbs';
 import BreadcrumbsInterfaceV2 from 'app/components/events/interfaces/breadcrumbsV2/breadcrumbs';
 
-type Props = React.ComponentProps<typeof BreadcrumbsInterface>;
+type Props = React.ComponentProps<typeof BreadcrumbsInterfaceV2>;
 
 const EventEntriesBreadcrumbs = (props: Props) => (
   <Feature features={['breadcrumbs-v2']}>
