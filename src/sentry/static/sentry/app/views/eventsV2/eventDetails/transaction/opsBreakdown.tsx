@@ -91,6 +91,69 @@ class OpsBreakdown extends React.Component<Props> {
             },
           ];
 
+    const operationNamecoverages = spans.reduce(
+      (coverages: OperationDurationCoverage, span: RawSpanType) => {
+        let startTimestamp = span.start_timestamp;
+        let endTimestamp = span.timestamp;
+
+        if (endTimestamp < startTimestamp) {
+          // reverse timestamps
+          startTimestamp = span.timestamp;
+          endTimestamp = span.start_timestamp;
+        }
+
+        // invariant: startTimestamp <= endTimestamp
+
+        let operationName = span.op;
+
+        if (typeof operationName !== 'string') {
+          // a span with no operation name is considered an 'unknown' op
+          operationName = 'unknown';
+        }
+
+        const cover: TimeWindowSpan = [startTimestamp, endTimestamp];
+
+        const operationNamecoverage = coverages[operationName] ?? [];
+
+        if (operationNamecoverage.length <= 0) {
+          coverages[operationName] = [cover];
+
+          return coverages;
+        }
+
+        function intersectCover(currentCover: TimeWindowSpan, nextCover: TimeWindowSpan) {
+          // TODO: to be implemented
+          const disjoint: TimeWindowSpan = currentCover;
+          const next: TimeWindowSpan = nextCover;
+          return {disjoint, next};
+        }
+
+        // TODO: the hard part
+        let currentCover = cover;
+
+        const foo: TimeWindowSpan[] = [];
+
+        for (const nextCover of operationNamecoverage) {
+          const {disjoint, next} = intersectCover(currentCover, nextCover);
+
+          if (next.length > 0) {
+            currentCover = next;
+          }
+
+          foo.push(disjoint);
+        }
+
+        coverages[operationName] = foo;
+
+        return coverages;
+      },
+      {}
+    );
+
+    console.log('operationNamecoverages', operationNamecoverages);
+
+    // everything below is old
+
     type AggregateType = {
       [opname: string]: {
         totalDuration: number; // num of seconds
