@@ -13,6 +13,18 @@ import {pickSpanBarColour} from 'app/components/events/interfaces/spans/utils';
 import {t} from 'app/locale';
 import space from 'app/styles/space';
 
+type StartTimestamp = number;
+type EndTimestamp = number;
+
+type TimeWindowSpan = [StartTimestamp, EndTimestamp];
+
+type OperationName = string;
+
+// mapping an operation name to a disjoint set of time windows (start/end timestamp).
+// this is an intermediary data structure to help calculate the coverage of an operation name
+// with respect to the root transaction span's operation lifetime
+type OperationDurationCoverage = Record<OperationName, Array<TimeWindowSpan>>;
+
 type OpStats = {percentage: number; totalDuration: number};
 
 const TOP_N_SPANS = 4;
